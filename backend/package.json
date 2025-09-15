@@ -1,0 +1,33 @@
+{
+  "name": "ayami_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "start": "cross-env NODE_ENV=production node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "3.0.2",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.2.0",
+    "dotenv-flow": "4.1.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "9.0.2",
+    "luxon": "^3.6.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "openai": "^4.103.0",
+    "pg": "^8.16.3",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

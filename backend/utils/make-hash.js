@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // utils/make-hash.js
 // Утилита для генерации bcrypt-хэша пароля.
-// Запуск: node backend/utils/make-hash.js admin123
+// Запуск: docker-compose exec backend node utils/make-hash.js admin123
 
 const bcrypt = require('bcryptjs');
 

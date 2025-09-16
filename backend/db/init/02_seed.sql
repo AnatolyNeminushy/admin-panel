@@ -1,6 +1,6 @@
 -- accounts: тестовый админ
 insert into accounts (email, password_hash, full_name, role, is_active)
-values ('admin@test', '$2b$10$X2FTl6c.pynWr4rLtXr0OuxSFGIljunNfP6TIJEfQ5qYkPACTik/6', 'Admin User', 'admin', true)
+values ('admin@test', '$2b$10$LMgHrIdwnkFbeO6YRKIEmeAxAH0Ck2J94IW4np4WW2JqvLoOxWnw2', 'Admin User', 'admin', true)
 on conflict (email) do nothing;
 
 -- chats: тестовый чат

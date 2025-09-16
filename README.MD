@@ -75,7 +75,7 @@ docker compose up -d
 
 В базе уже есть:
 
-* **accounts**: `admin@example.com` (роль `admin`, пароль задаём сами)
+* **accounts**: `admin@test` (роль `admin`, пароль по умолчанию admin123)
 * **chats**: тестовый Telegram-чат
 * **messages**: одно тестовое сообщение
 * **orders**: заказ (`total = 1200`)

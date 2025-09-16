@@ -1,136 +1,150 @@
-import Button from "@/components/Button";
-import { useMemo, useState } from "react";
+// pages/database/DatabasePage.jsx
 
-import { TAB_TITLES, schema } from "./config/constants";
-import { fmtDate } from "./utils/format";
-import { isPlaceholderId, makePlaceholderId } from "./utils/placeholders";
+import { useMemo, useState } from 'react';
+import Button from '@/components/Button';
 
-import Badge from "./components/Badge";
-import Toolbar from "./components/Toolbar";
-import FilterBar from "./components/FilterBar";
-import MobileCards from "./components/MobileCards";
-import EditorModal from "./components/EditorModal";
-import { schema as allSchemas } from "./config/constants";
+import { TAB_TITLES, schema as SCHEMAS } from './config/constants'; // единый импорт схем
+import { fmtDate } from './utils/format';
+import { isPlaceholderId, makePlaceholderId } from './utils/placeholders';
+
+import Badge from './components/Badge';
+import Toolbar from './components/Toolbar';
+import FilterBar from './components/FilterBar';
+import MobileCards from './components/MobileCards';
+import EditorModal from './components/EditorModal';
 
 import {
   saveRow as apiSaveRow,
   deleteRow as apiDeleteRow,
-} from "./api/databaseApi";
-import useTableData from "./hooks/useTableData";
+} from './api/databaseApi';
+import useTableData from './hooks/useTableData';
+
+// допустимые платформы для orders/reservations
+const ALLOWED_PLATFORMS = ['telegram', 'vk'];
 
 export default function DatabasePage() {
-  const td = useTableData("chats"); // всё состояние списка и загрузка — в хуке
+  // Хук инкапсулирует загрузку таблицы, пагинацию, фильтры, поиск и активную вкладку
+  const td = useTableData('chats');
 
-  // editor
+  // Состояние модалки-редактора
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState("add");
-  const [form, setForm] = useState({});
+  const [editorMode, setEditorMode] = useState('add'); // 'add' | 'edit'
+  const [form, setForm] = useState({}); // значения полей текущей формы
 
-  // колонки
+  // Конфигурация колонок для текущей вкладки (мемоизация по имени вкладки)
   const columns = useMemo(() => {
     switch (td.tab) {
-      case "chats":
+      case 'chats':
         return [
           {
-            key: "chat_id",
-            title: "ID чата",
-            render: (v) => (isPlaceholderId(v) ? "—" : v),
+            key: 'chat_id',
+            title: 'ID чата',
+            // Для placeholder-ID показываем «—»
+            render: (v) => (isPlaceholderId(v) ? '—' : v),
           },
-          { key: "username", title: "Юзернейм" },
-          { key: "first_name", title: "Имя" },
-          { key: "last_name", title: "Фамилия" },
+          { key: 'username', title: 'Юзернейм' },
+          { key: 'first_name', title: 'Имя' },
+          { key: 'last_name', title: 'Фамилия' },
           {
-            key: "platform",
-            title: "Платформа",
-            render: (v) => <Badge>{v || "—"}</Badge>,
+            key: 'platform',
+            title: 'Платформа',
+            render: (v) => <Badge>{v || '—'}</Badge>,
           },
         ];
-      case "messages":
+      case 'messages':
         return [
-          { key: "id", title: "ID" },
-          { key: "chat_id", title: "ID чата" },
-          { key: "username", title: "Юзернейм" },
+          { key: 'id', title: 'ID' },
+          { key: 'chat_id', title: 'ID чата' },
+          { key: 'username', title: 'Юзернейм' },
           {
-            key: "from_me",
-            title: "Отправитель",
-            render: (v) => <Badge>{v ? "Оператор" : "Клиент"}</Badge>,
+            key: 'from_me',
+            title: 'Отправитель',
+            render: (v) => <Badge>{v ? 'Оператор' : 'Клиент'}</Badge>,
           },
-          { key: "text", title: "Сообщение" },
-          { key: "date", title: "Дата и время", render: fmtDate },
+          { key: 'text', title: 'Сообщение' },
+          { key: 'date', title: 'Дата и время', render: fmtDate },
         ];
-      case "orders":
+      case 'orders':
         return [
-          { key: "id", title: "ID" },
-          { key: "tg_username", title: "TG юзернейм" },
-          { key: "name", title: "Имя" },
-          { key: "phone", title: "Телефон" },
-          { key: "order_type", title: "Тип заказа" },
-          { key: "date", title: "Дата" },
-          { key: "time", title: "Время" },
-          { key: "total", title: "Сумма" },
+          { key: 'id', title: 'ID' },
+          { key: 'tg_username', title: 'TG юзернейм' },
+          { key: 'name', title: 'Имя' },
+          { key: 'phone', title: 'Телефон' },
+          { key: 'order_type', title: 'Тип заказа' },
+          { key: 'date', title: 'Дата' },
+          { key: 'time', title: 'Время' },
+          { key: 'total', title: 'Сумма' },
           {
-            key: "platform",
-            title: "Платформа",
-            render: (v) => <Badge>{v || "—"}</Badge>,
+            key: 'platform',
+            title: 'Платформа',
+            render: (v) => <Badge>{v || '—'}</Badge>,
           },
-          { key: "created_at", title: "Создано", render: fmtDate },
+          { key: 'created_at', title: 'Создано', render: fmtDate },
         ];
       default:
+        // reservations (и прочие вкладки по умолчанию)
         return [
-          { key: "id", title: "ID" },
-          { key: "tg_username", title: "TG юзернейм" },
-          { key: "name", title: "Имя" },
-          { key: "phone", title: "Телефон" },
-          { key: "address", title: "Адрес" },
-          { key: "date", title: "Дата" },
-          { key: "time", title: "Время" },
-          { key: "guests", title: "Гостей" },
+          { key: 'id', title: 'ID' },
+          { key: 'tg_username', title: 'TG юзернейм' },
+          { key: 'name', title: 'Имя' },
+          { key: 'phone', title: 'Телефон' },
+          { key: 'address', title: 'Адрес' },
+          { key: 'date', title: 'Дата' },
+          { key: 'time', title: 'Время' },
+          { key: 'guests', title: 'Гостей' },
           {
-            key: "platform",
-            title: "Платформа",
-            render: (v) => <Badge>{v || "—"}</Badge>,
+            key: 'platform',
+            title: 'Платформа',
+            render: (v) => <Badge>{v || '—'}</Badge>,
           },
-          { key: "created_at", title: "Создано", render: fmtDate },
+          { key: 'created_at', title: 'Создано', render: fmtDate },
         ];
     }
   }, [td.tab]);
 
-  // редактор
+  // Открытие редактора: подготавливает форму по схеме текущей вкладки
   function openEditor(mode, row = null) {
     setEditorMode(mode);
     const clean = {};
-    for (const f of schema[td.tab]) clean[f.key] = row?.[f.key] ?? "";
+    for (const f of SCHEMAS[td.tab]) clean[f.key] = row?.[f.key] ?? '';
     setForm(clean);
     setEditorOpen(true);
   }
 
+  // Сохранение формы: нормализует типы по схеме и вызывает API
   async function saveEditor() {
-    let body = { ...form };
+    const body = { ...form };
 
-    if (td.tab === "chats") {
-      const raw = String(body.chat_id ?? "").trim();
-      if (raw === "" || raw === "-") body.chat_id = makePlaceholderId();
-      else {
+    if (td.tab === 'chats') {
+      // Для чатов поле chat_id допускает placeholder («—»). Иначе — число.
+      const raw = String(body.chat_id ?? '').trim();
+      if (raw === '' || raw === '-') {
+        body.chat_id = makePlaceholderId();
+      } else {
         const n = Number(raw);
         if (!Number.isFinite(n)) {
-          alert("ID чата должен быть числом или оставьте «—»");
+          alert('ID чата должен быть числом или оставьте «—»');
           return;
         }
         body.chat_id = n;
       }
     } else {
-      for (const f of schema[td.tab]) {
-        if (f.readOnly) delete body[f.key];
-        else if (f.type === "number" && body[f.key] !== "")
+      // Приведение типов по описанию схемы: number, checkbox, readOnly
+      for (const f of SCHEMAS[td.tab]) {
+        if (f.readOnly) {
+          delete body[f.key];
+        } else if (f.type === 'number' && body[f.key] !== '') {
           body[f.key] = Number(body[f.key]);
-        else if (f.type === "checkbox") body[f.key] = !!body[f.key];
+        } else if (f.type === 'checkbox') {
+          body[f.key] = !!body[f.key];
+        }
       }
     }
 
-    if (td.tab === "orders" || td.tab === "reservations") {
-      const allowed = ["telegram", "vk"];
-      if (!allowed.includes(body.platform)) {
-        alert("Выберите платформу: telegram или vk");
+    // Валидация платформы для заказов и броней
+    if (td.tab === 'orders' || td.tab === 'reservations') {
+      if (!ALLOWED_PLATFORMS.includes(body.platform)) {
+        alert('Выберите платформу: telegram или vk');
         return;
       }
     }
@@ -139,14 +153,16 @@ export default function DatabasePage() {
       await apiSaveRow(td.tab, editorMode, form, body);
       setEditorOpen(false);
       td.setPage(1);
-      td.setQ((p) => ({ ...p })); // триггер перезагрузки
+      td.setQ((p) => ({ ...p })); // триггер перезагрузки данных
     } catch (e) {
-      alert(e.message || "Save error");
+      alert(e.message || 'Save error');
     }
   }
 
+  // Удаление строки с подтверждением и последующей перезагрузкой данных
   async function deleteRow(row) {
-    if (!confirm("Удалить запись?")) return;
+    // confirm — синхронное подтверждение в браузере
+    if (!confirm('Удалить запись?')) return;
     try {
       await apiDeleteRow(td.tab, row);
       td.setPage(1);
@@ -160,15 +176,23 @@ export default function DatabasePage() {
     <div className="p-3 sm:p-4 lg:p-6 max-w-7xl mx-auto space-y-4">
       {/* Tabs */}
       <div className="overflow-x-auto -mx-1">
-        <div className="flex gap-2 px-1 min-w-max snap-x snap-mandatory">
+        <div
+          className="flex gap-2 px-1 min-w-max snap-x snap-mandatory"
+          role="tablist" // контейнер табов для a11y
+          aria-label="Разделы базы данных"
+        >
           {td.tabs.map((t) => (
             <Button
               key={t}
               onClick={() => td.switchTab(t)}
               variant="tab"
               size="sm"
+              role="tab" // сам таб
               aria-selected={td.tab === t}
+              aria-controls={`panel-${t}`}
+              id={`tab-${t}`}
               className="snap-start"
+              type="button"
             >
               {TAB_TITLES[t]}
             </Button>
@@ -176,6 +200,7 @@ export default function DatabasePage() {
         </div>
       </div>
 
+      {/* Панель инструментов: заголовок, поиск, счетчики, индикатор загрузки */}
       <Toolbar
         title={`Таблица: ${TAB_TITLES[td.tab]}`}
         q={td.q}
@@ -185,22 +210,27 @@ export default function DatabasePage() {
           td.setQ({ ...td.q, value: td.q.input.trim() });
         }}
         onClear={() => {
-          td.setQ({ input: "", value: "" });
+          td.setQ({ input: '', value: '' });
           td.setPage(1);
         }}
         total={td.total}
         loading={td.loading}
       />
 
-      {/* Фильтры */}
+      {/* Фильтры (мобильная кнопка показать/скрыть) */}
       <div className="md:hidden">
         <button
           onClick={() => td.setFiltersOpen((v) => !v)}
           className="w-full rounded-lg px-3 py-2 bg-slate-700 text-white"
+          type="button"
+          aria-expanded={td.filtersOpen}
+          aria-controls="filters-panel"
         >
-          {td.filtersOpen ? "Скрыть фильтры" : "Показать фильтры"}
+          {td.filtersOpen ? 'Скрыть фильтры' : 'Показать фильтры'}
         </button>
       </div>
+
+      {/* Панель фильтров */}
       <FilterBar
         tab={td.tab}
         filters={td.filtersDraft}
@@ -210,26 +240,27 @@ export default function DatabasePage() {
         mobileOpen={td.filtersOpen}
       />
 
-      <div className="flex justify-end md:justify-end">
+      {/* Кнопка добавления записи */}
+      <div className="flex justify-end">
         <Button
           type="button"
-          onClick={() => openEditor("add")}
+          onClick={() => openEditor('add')}
           variant="tab"
           size="sm"
-          aria-selected
+          aria-selected // декоративный стиль
           className="w-full md:w-auto px-4"
         >
           Добавить
         </Button>
       </div>
 
-      {/* MOBILE */}
-      <div className="md:hidden">
+      {/* MOBILE: карточки записей со встроенными действиями */}
+      <div className="md:hidden" id={`panel-${td.tab}`} role="tabpanel" aria-labelledby={`tab-${td.tab}`}>
         <MobileCards
           rows={td.rows}
           columns={columns}
           tab={td.tab}
-          onEdit={(r) => openEditor("edit", r)}
+          onEdit={(r) => openEditor('edit', r)}
           onDelete={deleteRow}
           page={td.page}
           pageSize={td.pageSize}
@@ -237,7 +268,7 @@ export default function DatabasePage() {
         />
       </div>
 
-      {/* DESKTOP */}
+      {/* DESKTOP: таблица со списком записей */}
       <div className="hidden md:block overflow-auto rounded-xl border border-slate-700">
         <table className="min-w-[760px] md:min-w-[980px] w-full text-sm">
           <thead className="bg-[#0f1b44] text-slate-200">
@@ -262,44 +293,44 @@ export default function DatabasePage() {
                 </td>
               </tr>
             ) : (
-              td.rows.map((r, idx) => (
-                <tr
-                  key={`${td.tab}-${idx}`}
-                  className="group hover:bg-[#0c173a]"
-                >
-                  <td className="px-3 py-2 group-hover:text-[#17e1b1]">
-                    {(td.page - 1) * td.pageSize + idx + 1}
-                  </td>
-                  {columns.map((c) => (
-                    <td
-                      key={c.key}
-                      className="px-3 py-2 group-hover:text-[#17e1b1]"
-                    >
-                      {c.render ? c.render(r[c.key], r) : r[c.key] ?? "—"}
+              td.rows.map((r, idx) => {
+                // Стабильный ключ для строки: id > chat_id > fallback
+                const rowKey = r.id ?? r.chat_id ?? `${td.tab}-${idx}`;
+                return (
+                  <tr key={rowKey} className="group hover:bg-[#0c173a]">
+                    <td className="px-3 py-2 group-hover:text-[#17e1b1]">
+                      {(td.page - 1) * td.pageSize + idx + 1}
                     </td>
-                  ))}
-                  <td className="px-3 py-2 text-right whitespace-nowrap">
-                    <button
-                      onClick={() => openEditor("edit", r)}
-                      className="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white mr-2"
-                    >
-                      Изм.
-                    </button>
-                    <button
-                      onClick={() => deleteRow(r)}
-                      className="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white"
-                    >
-                      Удал.
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    {columns.map((c) => (
+                      <td key={c.key} className="px-3 py-2 group-hover:text-[#17e1b1]">
+                        {c.render ? c.render(r[c.key], r) : r[c.key] ?? '—'}
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openEditor('edit', r)}
+                        className="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white mr-2"
+                        type="button"
+                      >
+                        Изм.
+                      </button>
+                      <button
+                        onClick={() => deleteRow(r)}
+                        className="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white"
+                        type="button"
+                      >
+                        Удал.
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Пагинация */}
+      {/* Пагинация: выбор размера страницы и переход по страницам */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-500">На странице:</span>
@@ -318,6 +349,7 @@ export default function DatabasePage() {
             ))}
           </select>
         </div>
+
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -345,12 +377,12 @@ export default function DatabasePage() {
         </div>
       </div>
 
-      {/* модалка редактора — как было */}
+      {/* Модалка редактора записей */}
       <EditorModal
         open={editorOpen}
         mode={editorMode}
         tab={td.tab}
-        schema={allSchemas[td.tab]}
+        schema={SCHEMAS[td.tab]}
         form={form}
         setForm={setForm}
         onClose={() => setEditorOpen(false)}

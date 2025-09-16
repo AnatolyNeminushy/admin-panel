@@ -1,7 +1,13 @@
-import api from "../../../services/api";
+// pages/profile/api/index.js
+import api from '../../../services/api';
 
-// Возвращает объект user или бросает ошибку (для 401 и прочего)
+/**
+ * Получает информацию о текущем пользователе.
+ * Запрос: GET /auth/me
+ * Возвращает: объект user или null, если не авторизован.
+ * Ошибки: пробрасываются наверх (для обработки в хуке/компоненте).
+ */
 export async function getMe() {
-  const { data } = await api.get("/auth/me");
+  const { data } = await api.get('/auth/me');
   return data?.user || null;
 }

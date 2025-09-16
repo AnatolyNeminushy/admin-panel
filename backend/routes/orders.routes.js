@@ -1,18 +1,30 @@
-// server/routes/orders.routes.js
-const router = require("express").Router();
-const asyncH = require("../utils/asyncH");
-const orders = require("../controllers/orders.controller");
+// routes/orders.routes.js
+const router = require('express').Router();
+const asyncH = require('../utils/asyncH');
+const orders = require('../controllers/orders.controller');
 
-// GET /api/orders            (list + table=1 режим)
-router.get("/", asyncH(orders.list));
+/**
+ * GET /orders
+ * Возвращает список заказов (поддержка режима table=1 — на усмотрение контроллера)
+ */
+router.get('/', asyncH(orders.list));
 
-// POST /api/orders           (create)
-router.post("/", asyncH(orders.create));
+/**
+ * POST /orders
+ * Создание заказа
+ */
+router.post('/', asyncH(orders.create));
 
-// PUT /api/orders/:id        (update)
-router.put("/:id", asyncH(orders.update));
+/**
+ * PUT /orders/:id
+ * Обновление заказа
+ */
+router.put('/:id', asyncH(orders.update));
 
-// DELETE /api/orders/:id     (delete)
-router.delete("/:id", asyncH(orders.remove));
+/**
+ * DELETE /orders/:id
+ * Удаление заказа
+ */
+router.delete('/:id', asyncH(orders.remove));
 
 module.exports = router;

@@ -1,3 +1,7 @@
+/* src/App.css
+   Базовая обвязка для демо-страницы Vite/React.
+   Если используется Tailwind, держите файл пустым или только под глобальные стили. */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -11,9 +15,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -27,6 +33,7 @@
   }
 }
 
+/* Включаем анимацию только если пользователь не ограничил движение */
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;

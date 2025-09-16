@@ -1,10 +1,9 @@
+/* Tailwind CSS layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root { height: 100%; }
-body { overflow: hidden; } /* убираем главный скролл у body */
-
+/* Базовые корневые настройки (шрифты, рендеринг, тема) */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -20,56 +19,59 @@ body { overflow: hidden; } /* убираем главный скролл у body
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Глобальные правила страницы */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Скролл отключаем у body (страница управляет прокруткой через внутренние контейнеры) */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden; /* убираем главный скролл у body */
+  /* ВАЖНО: layout-центрирование оставляем компонентам, а не body */
+}
+
+/* Базовые стили ссылок */
 a {
   font-weight: 500;
   color: #646cff;
-  text-decoration: inherit;
+  text-decoration: none;
 }
 a:hover {
   color: #535bf2;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
+/* Кнопка: нейтральный базовый стиль + видимый фокус для доступности */
 button {
-  
-  outline: none;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 8px;
+  appearance: none;
+  background: #1a1a1a;
+  color: inherit;
   border: 1px solid transparent;
+  border-radius: 8px;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  box-shadow: none;
+  outline: none;
 }
 button:hover {
   border-color: #15d88d;
-  outline: none;
-  box-shadow: none;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-  outline: none;
-  box-shadow: none;
 }
 
+/* Видимый фокус (клавиатурная навигация) */
+button:focus-visible {
+  outline: 3px solid #15d88d;
+  outline-offset: 2px;
+}
+
+/* Светлая тема через prefers-color-scheme */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -83,37 +85,33 @@ button:focus-visible {
   }
 }
 
+/* Тонкий кастом-скролл для контейнера с id="tg-scroll" */
 #tg-scroll::-webkit-scrollbar {
   width: 10px;
 }
-
-/* по умолчанию — всё невидимое */
 #tg-scroll::-webkit-scrollbar-track {
   background-color: transparent;
   border-radius: 4px;
-  transition: background-color 2s ease;
+  transition: background-color 0.2s ease;
 }
 #tg-scroll::-webkit-scrollbar-thumb {
   background-color: transparent;
   border-radius: 4px;
-  transition: background-color 2s ease;
+  transition: background-color 0.2s ease;
 }
-
-/* при наведении на контейнер — проявляется и трек, и ползунок */
 #tg-scroll:hover::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.08);
 }
 #tg-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.322);
+  background: rgba(0, 0, 0, 0.32);
 }
-
-/* убираем стрелочки */
 #tg-scroll::-webkit-scrollbar-button {
   display: none;
   width: 0;
   height: 0;
 }
-/* Тот же мягкий кастом-скролл для страницы и для внутренних списков */
+
+/* Унифицированные кастом-скроллы для страниц/списков */
 .custom-scroll,
 .page-scroll {
   scrollbar-width: thin; /* Firefox */
@@ -124,8 +122,6 @@ button:focus-visible {
 .page-scroll:hover {
   scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
 }
-
-/* WebKit */
 .custom-scroll::-webkit-scrollbar,
 .page-scroll::-webkit-scrollbar {
   width: 10px;
@@ -146,6 +142,7 @@ button:focus-visible {
   background: rgba(0, 0, 0, 0.25);
 }
 
+/* Анимированный градиент для текста (.gradient-chaos) */
 @keyframes gradient-chaos {
   0% {
     background-position: 0% 50%;
@@ -166,11 +163,16 @@ button:focus-visible {
     background-position: 0% 50%;
   }
 }
-
 .gradient-chaos {
   background: linear-gradient(270deg, #17e1b1, #9b5de5, #17e1b1);
   background-size: 500% 500%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradient-chaos 10s ease-in-out infinite;
+}
+
+/* Заголовок h1 — общая типографика демо-страницы */
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
 }

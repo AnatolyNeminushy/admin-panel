@@ -1,17 +1,28 @@
-// server/routes/auth.routes.js
+// routes/auth.routes.js
 const { Router } = require('express');
-const router = Router();
-
 const { login, me } = require('../controllers/auth.controller');
 const auth = require('../middlewares/auth');
 
-const pass = (req, res, next) => next();
-const maybeAuth =
-  typeof auth === 'function'
-    ? auth(false) // как и хотел: токен опционален
-    : pass;
+const router = Router();
 
+/**
+ * middleware, который игнорируется, если auth недоступен;
+ * иначе вызываем auth(false) — токен опционален
+ */
+const pass = (req, res, next) => next();
+const maybeAuth = typeof auth === 'function' ? auth(false) : pass;
+
+/**
+ * POST /auth/login
+ * Аутентификация по email/password
+ */
 router.post('/login', login);
+
+/**
+ * GET /auth/me
+ * Возвращает текущего пользователя (если токен валиден),
+ * иначе { user: null }
+ */
 router.get('/me', maybeAuth, me);
 
 module.exports = router;

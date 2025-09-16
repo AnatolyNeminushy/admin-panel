@@ -1,10 +1,14 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import "./index.css";
+// src/main.jsx
+// Точка входа приложения: монтирует корневой React-компонент в #root.
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+    {/* Корневой компонент приложения */}
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

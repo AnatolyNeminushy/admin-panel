@@ -1,8 +1,12 @@
-// src/components/ChatList.jsx
+// pages/chats/components/ChatList.jsx
 import { useEffect, useState } from "react";
 import ChatListItem from "./ChatListItem";
 import { getDialogTimestamp } from "../utils/chatUtils";
 
+/**
+ * Хук: подписка на media query без сторонних библиотек.
+ * Возвращает true/false в зависимости от соответствия запросу.
+ */
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(query).matches : false
@@ -15,7 +19,7 @@ function useMediaQuery(query) {
     try {
       mql.addEventListener("change", onChange);
     } catch {
-      // Safari fallback
+      // Safari: старый API
       mql.addListener(onChange);
     }
     return () => {
@@ -31,8 +35,8 @@ function useMediaQuery(query) {
 }
 
 /**
- * Плавное появление каждого элемента (без сторонних пакетов).
- * Сначала рендерим "скрыто", потом включаем видимость -> transition.
+ * Обертка: плавное поочередное появление детей.
+ * Используется для каскадной анимации списка.
  */
 function AnimatedItem({ children, delay = 0, durationMs = 600 }) {
   const [shown, setShown] = useState(false);
@@ -42,7 +46,6 @@ function AnimatedItem({ children, delay = 0, durationMs = 600 }) {
     return () => clearTimeout(t);
   }, [delay]);
 
-  // Поддержка нестандартной длительности через inline-style
   const style = { transitionDuration: `${durationMs}ms` };
 
   return (
@@ -58,6 +61,10 @@ function AnimatedItem({ children, delay = 0, durationMs = 600 }) {
   );
 }
 
+/**
+ * Список диалогов: виртуализация не требуется (короткие выборки),
+ * вывод с компактной/расширенной датой в зависимости от ширины экрана.
+ */
 export default function ChatList({ dialogs, selectedId, onSelect }) {
   const isMobile = useMediaQuery("(max-width: 920px)");
 
@@ -67,7 +74,7 @@ export default function ChatList({ dialogs, selectedId, onSelect }) {
 
   return (
     <div
-      role="list"
+      role="listbox" // a11y: список с выбираемыми опциями
       className="
         flex flex-col
         gap-2 md:gap-3
@@ -82,28 +89,17 @@ export default function ChatList({ dialogs, selectedId, onSelect }) {
       {dialogs.map((dlg, i) => {
         const ts = getDialogTimestamp(dlg);
 
-        // компактная дата на мобиле, расширенная — на десктопе
+        // Формат даты: компакт на мобиле, расширенный на десктопе
         let lastDate = "";
         if (ts > 0) {
           const d = new Date(ts);
-          if (isMobile) {
-            lastDate = d.toLocaleString("ru-RU", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            });
-          } else {
-            lastDate = d.toLocaleString("ru-RU", {
-              day: "2-digit",
-              month: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            });
-          }
+          lastDate = d.toLocaleString("ru-RU", isMobile
+            ? { hour: "2-digit", minute: "2-digit", hour12: false }
+            : { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }
+          );
         }
 
-        // Небольшой каскад появления (по 30 мс между элементами, максимум 240 мс)
+        // Каскад появления с шагом ~30мс
         const delay = Math.min(i * 30, 240);
 
         return (
@@ -113,7 +109,6 @@ export default function ChatList({ dialogs, selectedId, onSelect }) {
               selected={selectedId === dlg.chat_id}
               onSelect={onSelect}
               lastDate={lastDate}
-              // доп. переходы на самом элементе — плавная смена фона при выборе
               className="transition-all duration-700 ease-in-out"
             />
           </AnimatedItem>

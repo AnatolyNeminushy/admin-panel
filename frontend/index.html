@@ -1,17 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./src/assets/logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!-- Масштабирование под мобильные, поддержка вырезов (notch) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
+    <!-- Базовая SEO/превью-инфа проекта -->
     <title>ayami.admin-panel.nmlab</title>
+    <meta name="description" content="Админ-панель Ayami: React + Vite + TailwindCSS" />
+    <meta name="theme-color" content="#15d88d" />
+
+    <!-- Иконка вкладки -->
+    <link rel="icon" type="image/svg+xml" href="./src/assets/logo.svg" />
+
+    <!-- Точка входа Vite-приложения -->
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Внешние зависимости для фоновой анимации (Vanta требует three.js) -->
+    <!-- Важно: three.js должен загружаться раньше vanta -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.dots.min.js" defer></script>
   </head>
   <body>
+    <!-- Корневой контейнер для React -->
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <!-- three.js должен быть ПЕРЕД vanta -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.dots.min.js"></script>
+    <!-- Если JS отключен — показываем подсказку -->
+    <noscript>Для работы приложения включите JavaScript.</noscript>
   </body>
 </html>

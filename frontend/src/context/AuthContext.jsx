@@ -1,36 +1,50 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import api from "../services/api";
+// src/context/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from 'react';
+import api from '../services/api';
 
-// 1) Контекст — всегда одно и то же значение по экспорту
+// Контекст аутентификации: хранит текущего пользователя и методы входа/выхода.
 const AuthCtx = createContext(null);
 
-// 2) Хук — всегда функция (никаких условных экспортов)
+// Хук доступа к контексту.
 export const useAuth = () => useContext(AuthCtx);
 
-// 3) Провайдер — дефолтный экспорт и только он
+// Провайдер: при монтировании проверяет токен и подгружает пользователя.
 export default function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [user, setUser] = useState(null);   // текущий пользователь или null
+  const [ready, setReady] = useState(false); // готовность: true после первичной загрузки
 
   useEffect(() => {
-    (async () => {
+    const loadUser = async () => {
       try {
-        const { data } = await api.get("/auth/me");
+        // /auth/me возвращает { user: {...} } или { user: null }
+        const { data } = await api.get('/auth/me');
         setUser(data.user);
-      } catch {}
-      setReady(true);
-    })();
+      } catch {
+        // если токен отсутствует/невалиден — оставляем user = null
+      } finally {
+        setReady(true);
+      }
+    };
+    loadUser();
   }, []);
 
+  // Вход: отправляем email/password, сохраняем токен, кладём пользователя в state.
   const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("auth_token", data.token);
-    setUser(data.user);
-    return data.user;
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      localStorage.setItem('auth_token', data.token);
+      setUser(data.user);
+      return data.user;
+    } catch (e) {
+      // Пробрасываем читаемое сообщение для UI: toast/alert
+      const msg = e?.response?.data?.error || 'Login failed';
+      throw new Error(msg);
+    }
   };
 
+  // Выход: удаляем токен и сбрасываем пользователя.
   const logout = () => {
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem('auth_token');
     setUser(null);
   };
 

@@ -1,15 +1,20 @@
+// pages/chats/components/MessagePane.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 import platformIcon from "../../../assets/avatar.png";
 import botAvatar from "../../../assets/tg.jpg";
 
+/**
+ * Панель сообщений: шапка диалога, лента с дозагрузкой вверх,
+ * “липкий” скролл к низу и композер отправки.
+ */
 export default function MessagePane({
   selectedId,
   messages,
   loading,
   onLoadMore,
   onSend,
-  onBack, // если передан — рисуем кнопку ←, но показываем её только на мобильных
+  onBack, // если передан — показываем кнопку ← на мобильных
 }) {
   const scRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -18,11 +23,15 @@ export default function MessagePane({
 
   const [text, setText] = useState("");
 
+  // Порог догрузки и липкости прокрутки
   const PRELOAD_EDGE = 60;
   const STICKY_EDGE = 80;
   const GROUP_MS = 5 * 60 * 1000;
 
-  // Парсер времени Postgres "YYYY-MM-DD HH:mm:ss.ffffff" -> timestamp (ms)
+  /**
+   * Парсер времени Postgres "YYYY-MM-DD HH:mm:ss.ffffff" → timestamp (ms).
+   * Безопасно возвращает -Infinity при нераспознанных значениях.
+   */
   const ts = (d) => {
     if (!d) return -Infinity;
     if (d instanceof Date) return d.getTime();
@@ -38,7 +47,10 @@ export default function MessagePane({
     return -Infinity;
   };
 
-  // Стабильная сортировка сообщений
+  /**
+   * Стабильная сортировка: по дате, потом по id, затем по локальному порядку.
+   * Важно для корректного построения группы и последовательности.
+   */
   const sortedMessages = useMemo(() => {
     return [...messages].sort((a, b) => {
       const ta = ts(a.date);
@@ -94,14 +106,14 @@ export default function MessagePane({
     ? String(peerMsg.platform).toUpperCase()
     : "Диалог";
 
-  // при смене чата — к низу + чистим ввод
+  // При смене чата — перейти в конец и очистить ввод
   useEffect(() => {
     if (!selectedId) return;
     requestAnimationFrame(scrollToBottom);
     setText("");
   }, [selectedId]);
 
-  // новые сообщения — скроллим вниз, только если пользователь у низа
+  // Новые сообщения — держим скролл у низа, если пользователь не прокрутил вверх
   useEffect(() => {
     if (!scRef.current) return;
     if (atBottomRef.current) requestAnimationFrame(scrollToBottom);
@@ -113,12 +125,12 @@ export default function MessagePane({
 
     atBottomRef.current = computeAtBottom();
 
-    // догрузка вверх
+    // Догрузка вверх, когда подходим к началу
     if (onLoadMore && el.scrollTop <= PRELOAD_EDGE && !loading) {
       prevHeightRef.current = el.scrollHeight;
       prevScrollTopRef.current = el.scrollTop;
       try {
-        const loaded = await onLoadMore(); // true, если догрузили
+        const loaded = await onLoadMore(); // true, если получены старые сообщения
         if (loaded) {
           requestAnimationFrame(() => {
             const now = scRef.current;
@@ -133,7 +145,7 @@ export default function MessagePane({
     }
   };
 
-  // отправка из композера
+  // Отправка сообщения из композера
   const doSend = () => {
     const value = text.trim();
     if (!value || !selectedId) return;
@@ -159,11 +171,12 @@ export default function MessagePane({
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      {/* Шапка диалога */}
+      {/* Шапка диалога: аватар, имя, платформа */}
       <div className="sticky top-0 z-20">
         <div className="flex items-center gap-3 px-3 py-2 bg-white/90 backdrop-blur border-b border-gray-200">
           {typeof onBack === "function" && (
             <button
+              type="button"
               onClick={onBack}
               className="p-2 -ml-1 rounded-md hover:bg-gray-100 active:opacity-90 md:hidden"
               aria-label="Назад к чатам"
@@ -185,7 +198,7 @@ export default function MessagePane({
         </div>
       </div>
 
-      {/* Лента сообщений (единственный скролл) */}
+      {/* Лента сообщений: единый вертикальный скролл с дозагрузкой вверх */}
       <div
         id="tg-scroll"
         ref={scRef}
@@ -233,7 +246,8 @@ export default function MessagePane({
         </div>
       </div>
 
-      {/* Композер */}
+      {/* Композер: textarea + кнопка отправки, 
+      Enter — отправить, Shift+Enter — перенос */}
       <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur border-t border-gray-200">
         <div className="p-3 flex gap-2 pb-[25%] sm:pb-3 md:pb-3 ">
           <textarea
@@ -244,8 +258,10 @@ export default function MessagePane({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
             disabled={!selectedId}
+            aria-label="Поле ввода сообщения"
           />
           <button
+            type="button"
             onClick={doSend}
             disabled={!selectedId || !text.trim()}
             className={`px-4 py-2 rounded-xl text-sm font-medium ${

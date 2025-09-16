@@ -1,66 +1,108 @@
-import { useEffect, useMemo, useState } from "react";
-import { loadRows } from "../api/databaseApi";
+// pages/database/hooks/useTableData.js
+import { useEffect, useMemo, useState } from 'react';
+import { loadRows } from '../api/databaseApi';
 
-export default function useTableData(initialTab = "chats") {
-  // вкладки
-  const tabs = ["chats", "messages", "orders", "reservations"];
+// Хук для работы с данными таблицы: загрузка, вкладки, поиск, фильтры, пагинация.
+export default function useTableData(initialTab = 'chats') {
+  // Допустимые вкладки (контролируем внешний интерфейс)
+  const tabs = ['chats', 'messages', 'orders', 'reservations'];
+
+  // Текущая вкладка
   const [tab, setTab] = useState(initialTab);
 
-  // список
+  // Данные списка
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // пагинация/поиск
+  // Пагинация и поиск
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [q, setQ] = useState({ input: "", value: "" });
+  const [q, setQ] = useState({ input: '', value: '' }); // input — то, что печатает пользователь; value — применённый запрос
 
-  // фильтры
+  // Фильтры: черновик (в UI) и применённые (в запросе)
   const [filtersDraft, setFiltersDraft] = useState({});
   const [filtersApplied, setFiltersApplied] = useState({});
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const applyFilters = () => { setFiltersApplied(filtersDraft); setPage(1); setFiltersOpen(false); };
-  const resetFilters = () => { setFiltersDraft({}); setFiltersApplied({}); setPage(1); };
 
-  // загрузка данных
+  // Применение фильтров: фиксируем текущий черновик, сбрасываем страницу
+  const applyFilters = () => {
+    setFiltersApplied(filtersDraft);
+    setPage(1);
+    setFiltersOpen(false);
+  };
+
+  // Сброс фильтров к начальному состоянию
+  const resetFilters = () => {
+    setFiltersDraft({});
+    setFiltersApplied({});
+    setPage(1);
+  };
+
+  // Загрузка данных при изменении вкладки/страницы/запроса/фильтров
   useEffect(() => {
     const controller = new AbortController();
+
     (async () => {
       setLoading(true);
       try {
-        const { items, total } = await loadRows(tab, {
-          page, pageSize, qValue: q.value, filters: filtersApplied, signal: controller.signal,
+        const { items, total: totalCount } = await loadRows(tab, {
+          page,
+          pageSize,
+          qValue: q.value,
+          filters: filtersApplied,
+          signal: controller.signal,
         });
-        setRows(items); setTotal(total);
+        setRows(items);
+        setTotal(totalCount);
       } catch (e) {
-        if (e.name !== "AbortError") console.error(e);
-        setRows([]); setTotal(0);
+        // Прерывание запроса — норма при смене условий; остальное — логируем
+        if (e.name !== 'AbortError') console.error(e);
+        setRows([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     })();
+
+    // Отмена запроса при размонтаже/смене зависимостей
     return () => controller.abort();
   }, [tab, page, pageSize, q.value, filtersApplied]);
 
-  // смена вкладки со сбросами
-  const switchTab = (t) => {
-    setTab(t);
+  // Переключение вкладки с очищением состояния поиска/фильтров
+  const switchTab = (nextTab) => {
+    const safeTab = tabs.includes(nextTab) ? nextTab : 'chats';
+    setTab(safeTab);
     setPage(1);
-    setQ({ input: "", value: "" });
+    setQ({ input: '', value: '' });
     setFiltersDraft({});
     setFiltersApplied({});
     setFiltersOpen(false);
   };
 
+  // Количество страниц для пагинации
   const pages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
   return {
-    tabs, tab, switchTab,
-    rows, loading, total,
-    page, setPage, pageSize, setPageSize, pages,
-    q, setQ,
-    filtersDraft, setFiltersDraft, filtersApplied,
-    filtersOpen, setFiltersOpen, applyFilters, resetFilters,
+    tabs,
+    tab,
+    switchTab,
+    rows,
+    loading,
+    total,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    pages,
+    q,
+    setQ,
+    filtersDraft,
+    setFiltersDraft,
+    filtersApplied,
+    filtersOpen,
+    setFiltersOpen,
+    applyFilters,
+    resetFilters,
   };
 }

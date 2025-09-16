@@ -1,9 +1,9 @@
-// src/pages/chats/components/MessageBubble.jsx
+// pages/chats/components/MessageBubble.jsx
 
 import platformIcon from "../../../assets/avatar.png"; // гость
-import botAvatar from "../../../assets/tg.jpg"; // аватар бота (можешь поставить свой .png/.svg)
+import botAvatar from "../../../assets/tg.jpg"; // аватар бота
 
-// Fallback-иконка, если файл не загрузился
+// SVG-иконка по умолчанию на случай ошибки загрузки изображения
 const BOT_FALLBACK =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`
@@ -18,14 +18,19 @@ const BOT_FALLBACK =
   <rect x="28" y="44" width="8" height="6" rx="3" fill="white" opacity="0.9"/>
 </svg>`);
 
-export default function MessageBubble({ msg }) {
+/**
+ * Пузырь сообщения: определяет, чье сообщение (оператор/бот/гость),
+ * подставляет соответствующий аватар и выводит текст с датой/временем.
+ * prop position может использоваться для касания границ у групп сообщений.
+ */
+export default function MessageBubble({ msg, position, className = "" }) {
   const mine = Boolean(msg?.from_me);
 
   const role = String(
     msg?.role || msg?.sender || msg?.author || msg?.sender_name || ""
   ).toLowerCase();
 
-  // Явные признаки оператора
+  // Признак сообщения от оператора
   const isOperator =
     mine &&
     (["operator", "admin", "manager", "support", "agent", "оператор"].includes(
@@ -34,10 +39,10 @@ export default function MessageBubble({ msg }) {
       msg?.is_operator === true ||
       msg?.from_operator === true);
 
-  // Бот: всё исходящее, что не оператор, + явные признаки бота
+  // Признак сообщения от бота (исходящие не-операторские и явные флаги бота)
   const isBot =
     !isOperator &&
-    (mine || // ← последнее «спасающее» условие
+    (mine ||
       ["bot", "assistant", "ai", "system", "irbi"].includes(role) ||
       msg?.platform === "bot" ||
       msg?.is_bot === true ||
@@ -48,7 +53,7 @@ export default function MessageBubble({ msg }) {
   const isGuest = !mine && !isBot;
 
   return (
-    <div className="relative px-12 mb-1">
+    <div className={["relative px-12 mb-1", className].join(" ")}>
       {(isBot || isGuest) && (
         <img
           src={isBot ? botAvatar : platformIcon}
@@ -69,6 +74,8 @@ export default function MessageBubble({ msg }) {
             "min-w-[120px] max-w-[95%] md:max-w-[75%]",
             mine ? "bg-[#E3FBE5]" : "bg-white",
             "text-gray-900",
+            // position может использоваться для сглаживания углов 
+            // в группах (start/middle/end)
           ].join(" ")}
         >
           <div className="text-xs opacity-60 mb-1">

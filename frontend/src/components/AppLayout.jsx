@@ -2,33 +2,34 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import logoIcon from "../assets/logo-white.svg";
 
+/**
+ * Макет приложения: левый сайдбар + контент.
+ * На мобильных сайдбар открывается как drawer, блокируя прокрутку body.
+ */
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
 
   // Блокируем прокрутку body, когда открыт мобильный drawer
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => (document.body.style.overflow = "");
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = open ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = prev || "auto";
+    };
   }, [open]);
 
   return (
     <div className="w-screen h-screen flex bg-[#ececf4] overflow-hidden">
-      {/* ===== Sidebar (desktop inline) ===== */}
-      {/* Предполагается, что <Sidebar> сам умеет быть статичным на десктопе
-          и позиционироваться как drawer на мобиле на основе пропа open */}
+      {/* ===== Sidebar (desktop inline / mobile drawer) ===== */}
       <Sidebar open={open} onClose={() => setOpen(false)} />
 
-      {/* ===== Overlay for mobile drawer ===== */}
+      {/* ===== Overlay для мобильного drawer ===== */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/40 lg:hidden"
           onClick={() => setOpen(false)}
+          aria-hidden="true"
         />
       )}
 
@@ -40,8 +41,11 @@ export default function AppLayout() {
         {/* Mobile header */}
         <header className="hidden max-[920px]:flex items-center gap-3 px-3 py-2 bg-[#13214c] sticky top-0 z-50">
           <button
+            type="button"
             onClick={() => setOpen(true)}
             aria-label="Открыть меню"
+            aria-haspopup="dialog"
+            aria-expanded={open}
             className="p-2 rounded-xl bg-white/10 active:bg-white/5 focus:outline-none focus:ring-0"
           >
             <svg
@@ -50,6 +54,7 @@ export default function AppLayout() {
               viewBox="0 0 24 24"
               fill="none"
               className="text-[#17e1b1]"
+              aria-hidden="true"
             >
               <path
                 d="M3 6h18M3 12h18M3 18h18"
@@ -60,14 +65,13 @@ export default function AppLayout() {
             </svg>
           </button>
 
-          <div className="flex items-center gap-2">
-            
-            
-          </div>
+          {/* Лого/заголовок для мобилки (оставлено пустым умышленно) */}
+          <div className="flex items-center gap-2" />
         </header>
 
         {/* Main */}
-        <main className="flex-1 min-h-0 overflow-y-auto px-0 py-0 lg:px-6 lg:py-6 ">
+        <main className="flex-1 min-h-0 overflow-y-auto px-0 py-0 lg:px-6 lg:py-6">
+          {/* Контент маршрутов */}
           <Outlet />
         </main>
 

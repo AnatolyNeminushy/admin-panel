@@ -154,7 +154,7 @@ export default function DatabasePage() {
       setEditorOpen(false);
       // Простой вариант: жёстко обновляем страницу, чтобы точно увидеть изменения
       // (на случай, если кеш/состояние мешают мгновенно увидеть результат)
-      if (typeof window !== 'undefined') window.location.reload();
+      if (typeof window !== 'undefined') window.location.replace(window.location.href);
     } catch (e) {
       alert(e.message || 'Save error');
     }
@@ -167,7 +167,7 @@ export default function DatabasePage() {
     try {
       await apiDeleteRow(td.tab, row);
       // После удаления тоже обновляем страницу целиком
-      if (typeof window !== 'undefined') window.location.reload();
+      if (typeof window !== 'undefined') window.location.replace(window.location.href);
     } catch (e) {
       alert(e.message);
     }

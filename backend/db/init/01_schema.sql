@@ -38,8 +38,8 @@ create table if not exists orders (
   name text,
   phone text,
   order_type text,
-  date text,
-  time text,
+  "date" date,          -- было: text
+  "time" time,          -- было: text
   address text,
   items text,
   total integer,
@@ -55,8 +55,8 @@ create table if not exists reservations (
   name text,
   phone text,
   address text,
-  date date,
-  time text,
+  "date" date,
+  "time" text,          -- можешь позже тоже поменять на time, если удобно
   guests integer,
   comment text,
   created_at timestamptz default now(),

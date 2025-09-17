@@ -1,4 +1,4 @@
-version: "3.9"
+﻿
 
 services:
   db:
@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: dev_user
       POSTGRES_PASSWORD: dev_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/db/init:/docker-entrypoint-initdb.d:ro
@@ -44,8 +44,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # Фронт будет ходить на /api, а nginx внутри контейнера
-        # проксирует /api → backend:5000
+        # Р¤СЂРѕРЅС‚ Р±СѓРґРµС‚ С…РѕРґРёС‚СЊ РЅР° /api, Р° nginx РІРЅСѓС‚СЂРё РєРѕРЅС‚РµР№РЅРµСЂР°
+        # РїСЂРѕРєСЃРёСЂСѓРµС‚ /api в†’ backend:5000
         VITE_API_URL: /api
     container_name: adminpanel_frontend
     depends_on:
@@ -56,3 +56,4 @@ services:
 
 volumes:
   pgdata:
+

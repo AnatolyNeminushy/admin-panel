@@ -1,150 +1,147 @@
 ﻿// pages/database/DatabasePage.jsx
 
-import { useMemo, useState } from 'react';
-import Button from '@/components/Button';
+import { useMemo, useState } from "react";
+import Button from "@/components/Button";
 
-import { TAB_TITLES, schema as SCHEMAS } from './config/constants'; // РµРґРёРЅС‹Р№ РёРјРїРѕСЂС‚ СЃС…РµРј
-import { fmtDate } from './utils/format';
-import { isPlaceholderId, makePlaceholderId } from './utils/placeholders';
+import { TAB_TITLES, schema as SCHEMAS } from "./config/constants"; // единый импорт схем
+import { fmtDate } from "./utils/format";
+import { isPlaceholderId, makePlaceholderId } from "./utils/placeholders";
 
-import Badge from './components/Badge';
-import Toolbar from './components/Toolbar';
-import FilterBar from './components/FilterBar';
-import MobileCards from './components/MobileCards';
-import EditorModal from './components/EditorModal';
+import Badge from "./components/Badge";
+import Toolbar from "./components/Toolbar";
+import FilterBar from "./components/FilterBar";
+import MobileCards from "./components/MobileCards";
+import EditorModal from "./components/EditorModal";
 
-import {
-  saveRow as apiSaveRow,
-  deleteRow as apiDeleteRow,
-} from './api/databaseApi';
-import useTableData from './hooks/useTableData';
+import { saveRow as apiSaveRow, deleteRow as apiDeleteRow } from "./api/databaseApi";
+import useTableData from "./hooks/useTableData";
 
-// РґРѕРїСѓСЃС‚РёРјС‹Рµ РїР»Р°С‚С„РѕСЂРјС‹ РґР»СЏ orders/reservations
-const ALLOWED_PLATFORMS = ['telegram', 'vk'];
+// допустимые платформы для orders/reservations
+const ALLOWED_PLATFORMS = ["telegram", "vk"];
 
 export default function DatabasePage() {
-  // РҐСѓРє РёРЅРєР°РїСЃСѓР»РёСЂСѓРµС‚ Р·Р°РіСЂСѓР·РєСѓ С‚Р°Р±Р»РёС†С‹, РїР°РіРёРЅР°С†РёСЋ, С„РёР»СЊС‚СЂС‹, РїРѕРёСЃРє Рё Р°РєС‚РёРІРЅСѓСЋ РІРєР»Р°РґРєСѓ
-  const td = useTableData('chats');
+  // Хук инкапсулирует загрузку таблицы, пагинацию, фильтры, поиск и активную вкладку
+  const td = useTableData("chats");
 
-  // РЎРѕСЃС‚РѕСЏРЅРёРµ РјРѕРґР°Р»РєРё-СЂРµРґР°РєС‚РѕСЂР°
+  // Состояние модалки-редактора
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState('add'); // 'add' | 'edit'
-  const [form, setForm] = useState({}); // Р·РЅР°С‡РµРЅРёСЏ РїРѕР»РµР№ С‚РµРєСѓС‰РµР№ С„РѕСЂРјС‹
+  const [editorMode, setEditorMode] = useState("add"); // 'add' | 'edit'
+  const [form, setForm] = useState({}); // значения полей текущей формы
 
-  // РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ РєРѕР»РѕРЅРѕРє РґР»СЏ С‚РµРєСѓС‰РµР№ РІРєР»Р°РґРєРё (РјРµРјРѕРёР·Р°С†РёСЏ РїРѕ РёРјРµРЅРё РІРєР»Р°РґРєРё)
+  // Конфигурация колонок для текущей вкладки (мемоизация по имени вкладки)
   const columns = useMemo(() => {
     switch (td.tab) {
-      case 'chats':
+      case "chats":
         return [
           {
-            key: 'chat_id',
-            title: 'ID С‡Р°С‚Р°',
-            // Р”Р»СЏ placeholder-ID РїРѕРєР°Р·С‹РІР°РµРј В«вЂ”В»
-            render: (v) => (isPlaceholderId(v) ? 'вЂ”' : v),
+            key: "chat_id",
+            title: "ID чата",
+            // Для placeholder-ID показываем «—»
+            render: (v) => (isPlaceholderId(v) ? "—" : v),
           },
-          { key: 'username', title: 'Р®Р·РµСЂРЅРµР№Рј' },
-          { key: 'first_name', title: 'РРјСЏ' },
-          { key: 'last_name', title: 'Р¤Р°РјРёР»РёСЏ' },
+          { key: "username", title: "Юзернейм" },
+          { key: "first_name", title: "Имя" },
+          { key: "last_name", title: "Фамилия" },
           {
-            key: 'platform',
-            title: 'РџР»Р°С‚С„РѕСЂРјР°',
-            render: (v) => <Badge>{v || 'вЂ”'}</Badge>,
+            key: "platform",
+            title: "Платформа",
+            render: (v) => <Badge>{v || "—"}</Badge>,
           },
         ];
-      case 'messages':
+      case "messages":
         return [
-          { key: 'id', title: 'ID' },
-          { key: 'chat_id', title: 'ID С‡Р°С‚Р°' },
-          { key: 'username', title: 'Р®Р·РµСЂРЅРµР№Рј' },
+          { key: "id", title: "ID" },
+          { key: "chat_id", title: "ID чата" },
+          { key: "username", title: "Юзернейм" },
           {
-            key: 'from_me',
-            title: 'РћС‚РїСЂР°РІРёС‚РµР»СЊ',
-            render: (v) => <Badge>{v ? 'РћРїРµСЂР°С‚РѕСЂ' : 'РљР»РёРµРЅС‚'}</Badge>,
+            key: "from_me",
+            title: "Отправитель",
+            render: (v) => <Badge>{v ? "Оператор" : "Клиент"}</Badge>,
           },
-          { key: 'text', title: 'РЎРѕРѕР±С‰РµРЅРёРµ' },
-          { key: 'date', title: 'Р”Р°С‚Р° Рё РІСЂРµРјСЏ', render: fmtDate },
+          { key: "text", title: "Сообщение" },
+          { key: "date", title: "Дата и время", render: fmtDate },
         ];
-      case 'orders':
+      case "orders":
         return [
-          { key: 'id', title: 'ID' },
-          { key: 'tg_username', title: 'TG СЋР·РµСЂРЅРµР№Рј' },
-          { key: 'name', title: 'РРјСЏ' },
-          { key: 'phone', title: 'РўРµР»РµС„РѕРЅ' },
-          { key: 'order_type', title: 'РўРёРї Р·Р°РєР°Р·Р°' },
-          { key: 'date', title: 'Р”Р°С‚Р°' },
-          { key: 'time', title: 'Р’СЂРµРјСЏ' },
-          { key: 'total', title: 'РЎСѓРјРјР°' },
+          { key: "id", title: "ID" },
+          { key: "tg_username", title: "TG юзернейм" },
+          { key: "name", title: "Имя" },
+          { key: "phone", title: "Телефон" },
+          { key: "order_type", title: "Тип заказа" },
+          { key: "date", title: "Дата" },
+          { key: "time", title: "Время" },
+          { key: "total", title: "Сумма" },
           {
-            key: 'platform',
-            title: 'РџР»Р°С‚С„РѕСЂРјР°',
-            render: (v) => <Badge>{v || 'вЂ”'}</Badge>,
+            key: "platform",
+            title: "Платформа",
+            render: (v) => <Badge>{v || "—"}</Badge>,
           },
-          { key: 'created_at', title: 'РЎРѕР·РґР°РЅРѕ', render: fmtDate },
+          { key: "created_at", title: "Создано", render: fmtDate },
         ];
       default:
-        // reservations (Рё РїСЂРѕС‡РёРµ РІРєР»Р°РґРєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)
+        // reservations (и прочие вкладки по умолчанию)
         return [
-          { key: 'id', title: 'ID' },
-          { key: 'tg_username', title: 'TG СЋР·РµСЂРЅРµР№Рј' },
-          { key: 'name', title: 'РРјСЏ' },
-          { key: 'phone', title: 'РўРµР»РµС„РѕРЅ' },
-          { key: 'address', title: 'РђРґСЂРµСЃ' },
-          { key: 'date', title: 'Р”Р°С‚Р°' },
-          { key: 'time', title: 'Р’СЂРµРјСЏ' },
-          { key: 'guests', title: 'Р“РѕСЃС‚РµР№' },
+          { key: "id", title: "ID" },
+          { key: "tg_username", title: "TG юзернейм" },
+          { key: "name", title: "Имя" },
+          { key: "phone", title: "Телефон" },
+          { key: "address", title: "Адрес" },
+          { key: "date", title: "Дата" },
+          { key: "time", title: "Время" },
+          { key: "guests", title: "Гостей" },
           {
-            key: 'platform',
-            title: 'РџР»Р°С‚С„РѕСЂРјР°',
-            render: (v) => <Badge>{v || 'вЂ”'}</Badge>,
+            key: "platform",
+            title: "Платформа",
+            render: (v) => <Badge>{v || "—"}</Badge>,
           },
-          { key: 'created_at', title: 'РЎРѕР·РґР°РЅРѕ', render: fmtDate },
+          { key: "created_at", title: "Создано", render: fmtDate },
         ];
     }
   }, [td.tab]);
 
-  // РћС‚РєСЂС‹С‚РёРµ СЂРµРґР°РєС‚РѕСЂР°: РїРѕРґРіРѕС‚Р°РІР»РёРІР°РµС‚ С„РѕСЂРјСѓ РїРѕ СЃС…РµРјРµ С‚РµРєСѓС‰РµР№ РІРєР»Р°РґРєРё
+  // Открытие редактора: подготавливает форму по схеме текущей вкладки
   function openEditor(mode, row = null) {
     setEditorMode(mode);
     const clean = {};
-    for (const f of SCHEMAS[td.tab]) clean[f.key] = row?.[f.key] ?? '';
+    for (const f of SCHEMAS[td.tab]) clean[f.key] = row?.[f.key] ?? "";
     setForm(clean);
     setEditorOpen(true);
   }
 
-  // РЎРѕС…СЂР°РЅРµРЅРёРµ С„РѕСЂРјС‹: РЅРѕСЂРјР°Р»РёР·СѓРµС‚ С‚РёРїС‹ РїРѕ СЃС…РµРјРµ Рё РІС‹Р·С‹РІР°РµС‚ API
+  // Сохранение формы: нормализует типы по схеме и вызывает API
   async function saveEditor() {
     const body = { ...form };
 
-    if (td.tab === 'chats') {
-      // Р”Р»СЏ С‡Р°С‚РѕРІ РїРѕР»Рµ chat_id РґРѕРїСѓСЃРєР°РµС‚ placeholder (В«вЂ”В»). РРЅР°С‡Рµ вЂ” С‡РёСЃР»Рѕ.
-      const raw = String(body.chat_id ?? '').trim();
-      if (raw === '' || raw === '-') {
-        body.chat_id = makePlaceholderId();
+    if (td.tab === "chats") {
+      // Для чатов поле chat_id допускает placeholder («—»). Иначе — число.
+      const raw = String(body.chat_id ?? "").trim();
+      if (raw === "" || raw === "-") {
+        boZdy.chat_id = makePlaceholderId();
       } else {
         const n = Number(raw);
         if (!Number.isFinite(n)) {
-          alert('ID С‡Р°С‚Р° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С‡РёСЃР»РѕРј РёР»Рё РѕСЃС‚Р°РІСЊС‚Рµ В«вЂ”В»');
+          alert("ID чата должен быть числом или оставьте «—»");
           return;
         }
         body.chat_id = n;
       }
     } else {
-      // РџСЂРёРІРµРґРµРЅРёРµ С‚РёРїРѕРІ РїРѕ РѕРїРёСЃР°РЅРёСЋ СЃС…РµРјС‹: number, checkbox, readOnly
+      // Приведение типов по описанию схемы: number, checkbox, readOnly
       for (const f of SCHEMAS[td.tab]) {
         if (f.readOnly) {
           delete body[f.key];
-        } else if (f.type === 'number' && body[f.key] !== '') {
+        } else if (f.type === "number" && body[f.key] !== "") {
           body[f.key] = Number(body[f.key]);
-        } else if (f.type === 'checkbox') {
+        } else if (f.type === "checkbox") {
           body[f.key] = !!body[f.key];
         }
       }
     }
 
-    // Р’Р°Р»РёРґР°С†РёСЏ РїР»Р°С‚С„РѕСЂРјС‹ РґР»СЏ Р·Р°РєР°Р·РѕРІ Рё Р±СЂРѕРЅРµР№
-    if (td.tab === 'orders' || td.tab === 'reservations') {
+    // Валидация платформы для заказов и броней
+    if (td.tab === "orders" || td.tab === "reservations") {
       if (!ALLOWED_PLATFORMS.includes(body.platform)) {
-        alert('Р’С‹Р±РµСЂРёС‚Рµ РїР»Р°С‚С„РѕСЂРјСѓ: telegram РёР»Рё vk');
+        alert("Выберите платформу: telegram или vk");
         return;
       }
     }
@@ -152,22 +149,22 @@ export default function DatabasePage() {
     try {
       await apiSaveRow(td.tab, editorMode, form, body);
       setEditorOpen(false);
-      // РџСЂРѕСЃС‚РѕР№ РІР°СЂРёР°РЅС‚: Р¶С‘СЃС‚РєРѕ РѕР±РЅРѕРІР»СЏРµРј СЃС‚СЂР°РЅРёС†Сѓ, С‡С‚РѕР±С‹ С‚РѕС‡РЅРѕ СѓРІРёРґРµС‚СЊ РёР·РјРµРЅРµРЅРёСЏ
-      // (РЅР° СЃР»СѓС‡Р°Р№, РµСЃР»Рё РєРµС€/СЃРѕСЃС‚РѕСЏРЅРёРµ РјРµС€Р°СЋС‚ РјРіРЅРѕРІРµРЅРЅРѕ СѓРІРёРґРµС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚)
-      td.refresh();
+      // Простой вариант: жёстко обновляем страницу, чтобы точно увидеть изменения
+      // (на случай, если кеш/состояние мешают мгновенно увидеть результат)
+      if (typeof window !== "undefined") window.location.replace(window.location.href);
     } catch (e) {
-      alert(e.message || 'Save error');
+      alert(e.message || "Save error");
     }
   }
 
-  // РЈРґР°Р»РµРЅРёРµ СЃС‚СЂРѕРєРё СЃ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµРј Рё РїРѕСЃР»РµРґСѓСЋС‰РµР№ РїРµСЂРµР·Р°РіСЂСѓР·РєРѕР№ РґР°РЅРЅС‹С…
+  // Удаление строки с подтверждением и последующей перезагрузкой данных
   async function deleteRow(row) {
-    // confirm вЂ” СЃРёРЅС…СЂРѕРЅРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РІ Р±СЂР°СѓР·РµСЂРµ
-    if (!confirm('РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ?')) return;
+    // confirm — синхронное подтверждение в браузере
+    if (!confirm("Удалить запись?")) return;
     try {
       await apiDeleteRow(td.tab, row);
-      // РџРѕСЃР»Рµ СѓРґР°Р»РµРЅРёСЏ С‚РѕР¶Рµ РѕР±РЅРѕРІР»СЏРµРј СЃС‚СЂР°РЅРёС†Сѓ С†РµР»РёРєРѕРј
-      td.refresh();
+      // После удаления тоже обновляем страницу целиком
+      if (typeof window !== "undefined") window.location.replace(window.location.href);
     } catch (e) {
       alert(e.message);
     }
@@ -179,8 +176,8 @@ export default function DatabasePage() {
       <div className="overflow-x-auto -mx-1">
         <div
           className="flex gap-2 px-1 min-w-max snap-x snap-mandatory"
-          role="tablist" // РєРѕРЅС‚РµР№РЅРµСЂ С‚Р°Р±РѕРІ РґР»СЏ a11y
-          aria-label="Р Р°Р·РґРµР»С‹ Р±Р°Р·С‹ РґР°РЅРЅС‹С…"
+          role="tablist" // контейнер табов для a11y
+          aria-label="Разделы базы данных"
         >
           {td.tabs.map((t) => (
             <Button
@@ -188,7 +185,7 @@ export default function DatabasePage() {
               onClick={() => td.switchTab(t)}
               variant="tab"
               size="sm"
-              role="tab" // СЃР°Рј С‚Р°Р±
+              role="tab" // сам таб
               aria-selected={td.tab === t}
               aria-controls={`panel-${t}`}
               id={`tab-${t}`}
@@ -201,9 +198,9 @@ export default function DatabasePage() {
         </div>
       </div>
 
-      {/* РџР°РЅРµР»СЊ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ: Р·Р°РіРѕР»РѕРІРѕРє, РїРѕРёСЃРє, СЃС‡РµС‚С‡РёРєРё, РёРЅРґРёРєР°С‚РѕСЂ Р·Р°РіСЂСѓР·РєРё */}
+      {/* Панель инструментов: заголовок, поиск, счетчики, индикатор загрузки */}
       <Toolbar
-        title={`РўР°Р±Р»РёС†Р°: ${TAB_TITLES[td.tab]}`}
+        title={`Таблица: ${TAB_TITLES[td.tab]}`}
         q={td.q}
         setQ={td.setQ}
         onSearch={() => {
@@ -211,14 +208,14 @@ export default function DatabasePage() {
           td.setQ({ ...td.q, value: td.q.input.trim() });
         }}
         onClear={() => {
-          td.setQ({ input: '', value: '' });
+          td.setQ({ input: "", value: "" });
           td.setPage(1);
         }}
         total={td.total}
         loading={td.loading}
       />
 
-      {/* Р¤РёР»СЊС‚СЂС‹ (РјРѕР±РёР»СЊРЅР°СЏ РєРЅРѕРїРєР° РїРѕРєР°Р·Р°С‚СЊ/СЃРєСЂС‹С‚СЊ) */}
+      {/* Фильтры (мобильная кнопка показать/скрыть) */}
       <div className="md:hidden">
         <button
           onClick={() => td.setFiltersOpen((v) => !v)}
@@ -227,11 +224,11 @@ export default function DatabasePage() {
           aria-expanded={td.filtersOpen}
           aria-controls="filters-panel"
         >
-          {td.filtersOpen ? 'РЎРєСЂС‹С‚СЊ С„РёР»СЊС‚СЂС‹' : 'РџРѕРєР°Р·Р°С‚СЊ С„РёР»СЊС‚СЂС‹'}
+          {td.filtersOpen ? "Скрыть фильтры" : "Показать фильтры"}
         </button>
       </div>
 
-      {/* РџР°РЅРµР»СЊ С„РёР»СЊС‚СЂРѕРІ */}
+      {/* Панель фильтров */}
       <FilterBar
         tab={td.tab}
         filters={td.filtersDraft}
@@ -241,27 +238,32 @@ export default function DatabasePage() {
         mobileOpen={td.filtersOpen}
       />
 
-      {/* РљРЅРѕРїРєР° РґРѕР±Р°РІР»РµРЅРёСЏ Р·Р°РїРёСЃРё */}
+      {/* Кнопка добавления записи */}
       <div className="flex justify-end">
         <Button
           type="button"
-          onClick={() => openEditor('add')}
+          onClick={() => openEditor("add")}
           variant="tab"
           size="sm"
-          aria-selected // РґРµРєРѕСЂР°С‚РёРІРЅС‹Р№ СЃС‚РёР»СЊ
+          aria-selected // декоративный стиль
           className="w-full md:w-auto px-4"
         >
-          Р”РѕР±Р°РІРёС‚СЊ
+          Добавить
         </Button>
       </div>
 
-      {/* MOBILE: РєР°СЂС‚РѕС‡РєРё Р·Р°РїРёСЃРµР№ СЃРѕ РІСЃС‚СЂРѕРµРЅРЅС‹РјРё РґРµР№СЃС‚РІРёСЏРјРё */}
-      <div className="md:hidden" id={`panel-${td.tab}`} role="tabpanel" aria-labelledby={`tab-${td.tab}`}>
+      {/* MOBILE: карточки записей со встроенными действиями */}
+      <div
+        className="md:hidden"
+        id={`panel-${td.tab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${td.tab}`}
+      >
         <MobileCards
           rows={td.rows}
           columns={columns}
           tab={td.tab}
-          onEdit={(r) => openEditor('edit', r)}
+          onEdit={(r) => openEditor("edit", r)}
           onDelete={deleteRow}
           page={td.page}
           pageSize={td.pageSize}
@@ -269,7 +271,7 @@ export default function DatabasePage() {
         />
       </div>
 
-      {/* DESKTOP: С‚Р°Р±Р»РёС†Р° СЃРѕ СЃРїРёСЃРєРѕРј Р·Р°РїРёСЃРµР№ */}
+      {/* DESKTOP: таблица со списком записей */}
       <div className="hidden md:block overflow-auto rounded-xl border border-slate-700">
         <table className="min-w-[760px] md:min-w-[980px] w-full text-sm">
           <thead className="bg-[#0f1b44] text-slate-200">
@@ -280,7 +282,7 @@ export default function DatabasePage() {
                   {c.title}
                 </th>
               ))}
-              <th className="text-right px-3 py-2 font-semibold">Р”РµР№СЃС‚РІРёСЏ</th>
+              <th className="text-right px-3 py-2 font-semibold">Действия</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
@@ -290,12 +292,12 @@ export default function DatabasePage() {
                   colSpan={1 + columns.length + 1}
                   className="px-3 py-6 text-center text-slate-400"
                 >
-                  РџСѓСЃС‚Рѕ
+                  Пусто
                 </td>
               </tr>
             ) : (
               td.rows.map((r, idx) => {
-                // РЎС‚Р°Р±РёР»СЊРЅС‹Р№ РєР»СЋС‡ РґР»СЏ СЃС‚СЂРѕРєРё: id > chat_id > fallback
+                // Стабильный ключ для строки: id > chat_id > fallback
                 const rowKey = r.id ?? r.chat_id ?? `${td.tab}-${idx}`;
                 return (
                   <tr key={rowKey} className="group hover:bg-[#0c173a]">
@@ -304,23 +306,23 @@ export default function DatabasePage() {
                     </td>
                     {columns.map((c) => (
                       <td key={c.key} className="px-3 py-2 group-hover:text-[#17e1b1]">
-                        {c.render ? c.render(r[c.key], r) : r[c.key] ?? 'вЂ”'}
+                        {c.render ? c.render(r[c.key], r) : r[c.key] ?? "—"}
                       </td>
                     ))}
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       <button
-                        onClick={() => openEditor('edit', r)}
+                        onClick={() => openEditor("edit", r)}
                         className="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white mr-2"
                         type="button"
                       >
-                        РР·Рј.
+                        Изм.
                       </button>
                       <button
                         onClick={() => deleteRow(r)}
                         className="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white"
                         type="button"
                       >
-                        РЈРґР°Р».
+                        Удал.
                       </button>
                     </td>
                   </tr>
@@ -331,10 +333,10 @@ export default function DatabasePage() {
         </table>
       </div>
 
-      {/* РџР°РіРёРЅР°С†РёСЏ: РІС‹Р±РѕСЂ СЂР°Р·РјРµСЂР° СЃС‚СЂР°РЅРёС†С‹ Рё РїРµСЂРµС…РѕРґ РїРѕ СЃС‚СЂР°РЅРёС†Р°Рј */}
+      {/* Пагинация: выбор размера страницы и переход по страницам */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-500">РќР° СЃС‚СЂР°РЅРёС†Рµ:</span>
+          <span className="text-sm text-slate-500">На странице:</span>
           <select
             value={td.pageSize}
             onChange={(e) => {
@@ -360,10 +362,10 @@ export default function DatabasePage() {
             size="sm"
             className="px-4"
           >
-            РќР°Р·Р°Рґ
+            Назад
           </Button>
           <span className="text-sm text-slate-500">
-            СЃС‚СЂ. {td.page} / {td.pages}
+            стр. {td.page} / {td.pages}
           </span>
           <Button
             type="button"
@@ -373,12 +375,12 @@ export default function DatabasePage() {
             size="sm"
             className="px-4"
           >
-            Р’РїРµСЂС‘Рґ
+            Вперёд
           </Button>
         </div>
       </div>
 
-      {/* РњРѕРґР°Р»РєР° СЂРµРґР°РєС‚РѕСЂР° Р·Р°РїРёСЃРµР№ */}
+      {/* Модалка редактора записей */}
       <EditorModal
         open={editorOpen}
         mode={editorMode}
@@ -392,4 +394,3 @@ export default function DatabasePage() {
     </div>
   );
 }
-

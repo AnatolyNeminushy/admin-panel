@@ -20,6 +20,12 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
  */
 app.use(express.json({ limit: '1mb' }));
 
+// Отключаем кэширование, чтобы списки после изменений не брались из кеша
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 /**
  * Подключение модулей маршрутов.
  * Каждый файл внутри ./routes экспортирует Router с эндпоинтами своей области.

@@ -67,7 +67,7 @@ export function buildListUrl(tab, { page, pageSize, qValue, filters }) {
  */
 export async function loadRows(tab, { page, pageSize, qValue, filters, signal }) {
   const url = buildListUrl(tab, { page, pageSize, qValue, filters });
-  const res = await fetch(url, { signal });
+  const res = await fetch(url, { signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   const data = await res.json();
   const total = Number(res.headers.get('X-Total-Count') || data.total || 0);

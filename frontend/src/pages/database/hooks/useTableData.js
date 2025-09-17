@@ -14,7 +14,7 @@ export default function useTableData(initialTab = 'chats') {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
-  const [refreshKey, bumpRefreshKey] = useState(0);
+  const [refreshKey, bumpRefreshKey] = useState(0); // ключ для форс‑обновления данных
 
   // Пагинация и поиск
   const [page, setPage] = useState(1);
@@ -26,7 +26,7 @@ export default function useTableData(initialTab = 'chats') {
   const [filtersApplied, setFiltersApplied] = useState({});
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const refresh = () => bumpRefreshKey((key) => key + 1);
+  const refresh = () => bumpRefreshKey((key) => key + 1); // ручной триггер перезагрузки
 
   // Применение фильтров: фиксируем текущий черновик, сбрасываем страницу
   const applyFilters = () => {
@@ -72,15 +72,15 @@ export default function useTableData(initialTab = 'chats') {
     return () => controller.abort();
   }, [tab, page, pageSize, q.value, filtersApplied, refreshKey]);
 
-  // SSE подписка на серверные события для текущей вкладки
+  // SSE-подписка на серверные события для текущей вкладки (реальное время)
   useEffect(() => {
     try {
       const API = import.meta.env.VITE_API_URL;
       if (!API || typeof EventSource === 'undefined') return;
-      const es = new EventSource(`${API}/events?topics=${tab}`);
-      const onEvent = () => refresh();
+      const es = new EventSource(`${API}/events?topics=${tab}`); // подписываемся на топик вкладки
+      const onEvent = () => refresh(); // при любом событии этой вкладки перезагружаем данные
       es.addEventListener(tab, onEvent);
-      // На случай широковещательных событий
+      // На случай широковещательных событий (если сервер шлёт 'all')
       es.addEventListener('all', onEvent);
       return () => {
         try {

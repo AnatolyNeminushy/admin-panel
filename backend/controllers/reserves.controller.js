@@ -1,5 +1,6 @@
 // controllers/reserves.controller.js
 const pool = require('../db');
+const events = require('../utils/events');
 
 /**
  * Контроллер бронирований.
@@ -179,7 +180,9 @@ exports.create = async (req, res) => {
       guests,
       comment,
     ]);
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('reservations', { action: 'create', row });
+    return res.json(row);
   } catch (err) {
     console.error('RESERVES CREATE ERROR:', err);
     return res.status(500).json({ error: 'Internal error' });
@@ -245,7 +248,9 @@ exports.update = async (req, res) => {
     if (!rows.length) {
       return res.status(404).json({ error: 'Not found' });
     }
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('reservations', { action: 'update', row });
+    return res.json(row);
   } catch (err) {
     console.error('RESERVES UPDATE ERROR:', err);
     return res.status(500).json({ error: 'Internal error' });
@@ -269,6 +274,7 @@ exports.remove = async (req, res) => {
     if (!rowCount) {
       return res.status(404).json({ error: 'Not found' });
     }
+    events.broadcast('reservations', { action: 'delete', id });
     return res.json({ ok: true, id });
   } catch (err) {
     console.error('RESERVES REMOVE ERROR:', err);

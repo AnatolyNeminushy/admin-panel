@@ -72,6 +72,26 @@ export default function useTableData(initialTab = 'chats') {
     return () => controller.abort();
   }, [tab, page, pageSize, q.value, filtersApplied, refreshKey]);
 
+  // SSE подписка на серверные события для текущей вкладки
+  useEffect(() => {
+    try {
+      const API = import.meta.env.VITE_API_URL;
+      if (!API || typeof EventSource === 'undefined') return;
+      const es = new EventSource(`${API}/events?topics=${tab}`);
+      const onEvent = () => refresh();
+      es.addEventListener(tab, onEvent);
+      // На случай широковещательных событий
+      es.addEventListener('all', onEvent);
+      return () => {
+        try {
+          es.removeEventListener?.(tab, onEvent);
+          es.removeEventListener?.('all', onEvent);
+          es.close();
+        } catch {}
+      };
+    } catch {}
+  }, [tab]);
+
   // Переключение вкладки с очищением состояния поиска/фильтров
   const switchTab = (nextTab) => {
     const safeTab = tabs.includes(nextTab) ? nextTab : 'chats';

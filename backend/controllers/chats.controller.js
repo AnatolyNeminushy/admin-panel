@@ -5,6 +5,7 @@
  */
 
 const pool = require('../db');
+const events = require('../utils/events');
 
 /**
  * GET /api/chats
@@ -154,7 +155,9 @@ exports.createOrUpsert = async (req, res, next) => {
       platform,
     ]);
 
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('chats', { action: 'upsert', row });
+    return res.json(row);
   } catch (e) {
     return next(e);
   }
@@ -199,8 +202,9 @@ exports.update = async (req, res, next) => {
     if (!rows.length) {
       return res.status(404).json({ error: 'Not found' });
     }
-
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('chats', { action: 'update', row });
+    return res.json(row);
   } catch (e) {
     return next(e);
   }
@@ -227,7 +231,7 @@ exports.remove = async (req, res, next) => {
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Not found' });
     }
-
+    events.broadcast('chats', { action: 'delete', chat_id: chatId });
     return res.status(204).end();
   } catch (e) {
     return next(e);

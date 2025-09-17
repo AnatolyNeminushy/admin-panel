@@ -5,6 +5,7 @@
  */
 
 const pool = require('../db');
+const events = require('../utils/events');
 
 /**
  * GET /messages
@@ -128,7 +129,9 @@ exports.createRaw = async (req, res) => {
       String(text),
       date,
     ]);
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('messages', { action: 'create', row });
+    return res.json(row);
   } catch (err) {
     console.error('CREATE MESSAGE ERROR:', err);
     return res.status(500).json({ error: 'Internal error' });
@@ -169,7 +172,9 @@ exports.update = async (req, res) => {
     if (!rows.length) {
       return res.status(404).json({ error: 'Not found' });
     }
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('messages', { action: 'update', row });
+    return res.json(row);
   } catch (err) {
     console.error('UPDATE MESSAGE ERROR:', err);
     return res.status(500).json({ error: 'Internal error' });
@@ -195,6 +200,7 @@ exports.remove = async (req, res) => {
     if (!rowCount) {
       return res.status(404).json({ error: 'Not found' });
     }
+    events.broadcast('messages', { action: 'delete', id });
     return res.json({ ok: true, id });
   } catch (err) {
     console.error('REMOVE MESSAGE ERROR:', err);

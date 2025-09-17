@@ -1,5 +1,6 @@
 // controllers/orders.controller.js
 const pool = require('../db');
+const events = require('../utils/events');
 
 /**
  * Контроллер заказов.
@@ -173,7 +174,10 @@ exports.create = async (req, res) => {
       ],
     );
 
-    return res.json(rows[0]);
+    const row = rows[0];
+    // оповестим подписчиков таблицы
+    events.broadcast('orders', { action: 'create', row });
+    return res.json(row);
   } catch (e) {
     console.error('ORDERS CREATE ERROR:', e);
     return res.status(500).json({ error: 'Internal error' });
@@ -243,7 +247,9 @@ exports.update = async (req, res) => {
     );
 
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
-    return res.json(rows[0]);
+    const row = rows[0];
+    events.broadcast('orders', { action: 'update', row });
+    return res.json(row);
   } catch (e) {
     console.error('ORDERS UPDATE ERROR:', e);
     return res.status(500).json({ error: 'Internal error' });
@@ -264,7 +270,7 @@ exports.remove = async (req, res) => {
 
     const { rowCount } = await pool.query('DELETE FROM orders WHERE id = $1', [id]);
     if (!rowCount) return res.status(404).json({ error: 'Not found' });
-
+    events.broadcast('orders', { action: 'delete', id });
     return res.json({ ok: true, id });
   } catch (e) {
     console.error('ORDERS DELETE ERROR:', e);

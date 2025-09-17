@@ -32,6 +32,7 @@ app.use('/api/orders', require('./routes/orders.routes'));
 app.use('/api/reserves', require('./routes/reserves.routes'));
 app.use('/api/broadcasts', require('./routes/broadcasts.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/events', require('./routes/events.routes'));
 
 /**
  * 404 Not Found: если маршрут не найден — возвращаем единый JSON-ответ.

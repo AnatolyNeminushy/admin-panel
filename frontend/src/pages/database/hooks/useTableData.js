@@ -14,6 +14,7 @@ export default function useTableData(initialTab = 'chats') {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [refreshKey, bumpRefreshKey] = useState(0);
 
   // Пагинация и поиск
   const [page, setPage] = useState(1);
@@ -24,6 +25,8 @@ export default function useTableData(initialTab = 'chats') {
   const [filtersDraft, setFiltersDraft] = useState({});
   const [filtersApplied, setFiltersApplied] = useState({});
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const refresh = () => bumpRefreshKey((key) => key + 1);
 
   // Применение фильтров: фиксируем текущий черновик, сбрасываем страницу
   const applyFilters = () => {
@@ -67,7 +70,7 @@ export default function useTableData(initialTab = 'chats') {
 
     // Отмена запроса при размонтаже/смене зависимостей
     return () => controller.abort();
-  }, [tab, page, pageSize, q.value, filtersApplied]);
+  }, [tab, page, pageSize, q.value, filtersApplied, refreshKey]);
 
   // Переключение вкладки с очищением состояния поиска/фильтров
   const switchTab = (nextTab) => {
@@ -87,6 +90,7 @@ export default function useTableData(initialTab = 'chats') {
     tabs,
     tab,
     switchTab,
+    refresh,
     rows,
     loading,
     total,

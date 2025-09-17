@@ -153,7 +153,7 @@ export default function DatabasePage() {
       await apiSaveRow(td.tab, editorMode, form, body);
       setEditorOpen(false);
       td.setPage(1);
-      td.setQ((p) => ({ ...p })); // триггер перезагрузки данных
+      td.refresh();
     } catch (e) {
       alert(e.message || 'Save error');
     }
@@ -166,7 +166,7 @@ export default function DatabasePage() {
     try {
       await apiDeleteRow(td.tab, row);
       td.setPage(1);
-      td.setQ((p) => ({ ...p }));
+      td.refresh();
     } catch (e) {
       alert(e.message);
     }

@@ -152,8 +152,9 @@ export default function DatabasePage() {
     try {
       await apiSaveRow(td.tab, editorMode, form, body);
       setEditorOpen(false);
-      td.setPage(1);
-      td.refresh(); // перезагрузить список без манипуляций с полем поиска
+      // Простой вариант: жёстко обновляем страницу, чтобы точно увидеть изменения
+      // (на случай, если кеш/состояние мешают мгновенно увидеть результат)
+      if (typeof window !== 'undefined') window.location.reload();
     } catch (e) {
       alert(e.message || 'Save error');
     }
@@ -165,8 +166,8 @@ export default function DatabasePage() {
     if (!confirm('Удалить запись?')) return;
     try {
       await apiDeleteRow(td.tab, row);
-      td.setPage(1);
-      td.refresh(); // мгновенно обновить текущую страницу после удаления
+      // После удаления тоже обновляем страницу целиком
+      if (typeof window !== 'undefined') window.location.reload();
     } catch (e) {
       alert(e.message);
     }
